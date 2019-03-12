@@ -26,19 +26,6 @@ class seleniumBot():
     def goToPage(self, username):
         self.browser.get("https://www.instagram.com/" + username)
 
-    # TODO: Verify the correct account name
-    def recordInfo(self, username):
-        self.goToPage(username)
-        infoElems = self.browser.find_elements_by_class_name("-nal3")  # Class tag for profile info
-        profileData = []
-        for item in infoElems:  # Add three strings of profile info to profileData list
-            profileData.append(item.get_attribute("innerText"))
-        return profileData  # Returns a list of 3 items: post count, follower count, following count
-
-    def getUserFollowers(self, username, max):
-        followerCount = int(self.recordInfo(username)[1].split()[0])  # Number of followers profile has
-        infoElems = self.browser.find_elements_by_class_name("-nal3")  # CSS class tag for profile info
-
     #TODO: Verify the correct account name
     def recordInfo(self, username):
         self.goToPage(username)
