@@ -1,4 +1,4 @@
-import selenium, time
+import os, selenium, time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
@@ -11,7 +11,7 @@ class seleniumBot():
 
     def signIn(self):
         self.browser.get("https://www.instagram.com/accounts/login/")
-        time.sleep(2)  # TODO: Change to a wait for element to load
+        time.sleep(3)
         emailInput = self.browser.find_elements_by_css_selector("form input")[0]
         passwordInput = self.browser.find_elements_by_css_selector("form input")[1]
 
@@ -19,6 +19,7 @@ class seleniumBot():
         passwordInput.send_keys(self.password)
         passwordInput.send_keys(Keys.ENTER)
         time.sleep(2)
+
 
     def homePage(self):
         self.browser.get("https://www.instagram.com/")
@@ -38,33 +39,36 @@ class seleniumBot():
     def getUserFollowers(self, username, max):
         followerCount = self.recordInfo(username)[1].split()[0]
         infoElems = self.browser.find_elements_by_class_name("-nal3")  # Class tag for profile info
-
         followersButton = infoElems[1]
         followersButton.click()
         time.sleep(2)
 
-        followerBox = self.browser.find_element_by_css_selector('div[role=\'dialog\'] ul')  # Focuses follower list
-        userNames = []
+        # Set up the action chain
+        followersList = self.browser.find_element_by_css_selector('div[role=\'dialog\'] ul')
+        numberOfFollowersInList = len(followersList.find_elements_by_css_selector('li'))
 
-        followerBox.click()
+        followersList.click()
         actionChain = webdriver.ActionChains(self.browser)
 
-        # Fixed scroll bug.
-        while len(userNames) < max:  # This is supposed to keep scrolling until all the names are revealed
-            followerBox.click()  # Click on the listbox to focus it, in case browser scrolls erratically
-            actionChain.key_down(Keys.ARROW_DOWN).key_up(Keys.ARROW_DOWN).perform()  # Press/release down arrow
-            userNames = followerBox.find_elements_by_class_name('FPmhX')
+        # TODO: Fix Bug - Scrolling is not updating the number of list items, it is being
+        # TODO: returned as 12 every time. Must figure out a way to update this list properly.
+
+
+        #TODO: POSSIBLE SOLUTION: The page takes a second to load the next set of followers.
+        #TODO: Increase sleep timer to allow page load. Or insert some other sort of wait
+        #TODO: function.
+        
+        while (numberOfFollowersInList < max):
+            actionChain.key_down(Keys.SPACE).key_up(Keys.SPACE).perform()
             time.sleep(1)
-            print(len(userNames))
-            if len(userNames) >= (followerCount -1):  # Prevents infinite loop if max is set higher than total follower number
-                break                                 # For some reason, list always stops 1 before followerCount, while testing on MR page
+            numberOfFollowersInList = len(followersList.find_elements_by_css_selector('li'))
+            print(numberOfFollowersInList)
 
-        # Blank list bug fixed
-        profiles = []  # Will store the actual profile names
-        for name in userNames:
-            profiles.append(name.get_attribute('innerText'))
-        print(len(profiles))
-        return profiles
-
-# TODO: The getUserInfo function now works, but the list of names is returned LONGER than the set max (e.g. 48 for 40, 108 for 100).
-# TODO: How to stop the list from adding the last 8 names that are loaded?
+        followers = []
+        for user in followersList.find_elements_by_css_selector('li'):
+            userLink = user.find_element_by_css_selector('a').get_attribute("innerText")
+            print(userLink)
+            followers.append(userLink)
+            if (len(followers) == max):
+                break
+        return followers
